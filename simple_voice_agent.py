@@ -32,13 +32,26 @@ messages = [
 
 def ask_ollama(user_text: str) -> str:
     messages.append({"role": "user", "content": user_text})
-    response = requests.post(
-        "http://localhost:11434/api/chat",
-        json={"model": "llama3.2", "messages": messages, "stream": False}
-    )
-    reply = response.json()["message"]["content"]
-    messages.append({"role": "assistant", "content": reply})
-    return reply
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/chat",
+            json={"model": "llama3.2", "messages": messages, "stream": False},
+            timeout=30
+        )
+        response.raise_for_status()
+        reply = response.json()["message"]["content"]
+        messages.append({"role": "assistant", "content": reply})
+        return reply
+    except requests.exceptions.Timeout:
+        return "Sorry, that took too long. Please try again."
+    except requests.exceptions.ConnectionError:
+        return "I can't reach the local AI server right now."
+    except requests.exceptions.RequestException as e:
+        print(f"Ollama request failed: {e}")
+        return "Something went wrong talking to the AI."
+    except (KeyError, ValueError) as e:
+        print(f"Unexpected response format: {e}")
+        return "I got a strange response, please try again."
 
 # --- Main loop ---
 def main():
