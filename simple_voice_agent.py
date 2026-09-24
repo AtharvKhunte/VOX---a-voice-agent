@@ -1,31 +1,6 @@
-import speech_recognition as sr
-import subprocess
+from voice_utils import speak, listen
 import requests
 
-def speak(text: str):
-    print(f"[Agent]: {text}")
-    subprocess.run([
-        "python", "-c",
-        f"import pyttsx3; e=pyttsx3.init(); e.setProperty('rate',170); e.say('''{text}'''); e.runAndWait()"
-    ])
-
-# --- STT setup ---
-r = sr.Recognizer()
-mic = sr.Microphone()
-
-def listen():
-    with mic as source:
-        r.adjust_for_ambient_noise(source, duration=1)
-        audio = r.listen(source)
-    try:
-        return r.recognize_google(audio)
-    except sr.UnknownValueError:
-        return None
-    except sr.RequestError as e:
-        print(f"API error: {e}")
-        return None
-
-# --- LLM setup ---
 messages = [
     {"role": "system", "content": "You are a concise voice assistant. Limit all responses to 1-2 short sentences maximum."}
 ]
@@ -53,7 +28,6 @@ def ask_ollama(user_text: str) -> str:
         print(f"Unexpected response format: {e}")
         return "I got a strange response, please try again."
 
-# --- Main loop ---
 def main():
     speak("Voice pipeline initialized!")
 
